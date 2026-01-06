@@ -6,11 +6,6 @@ A full-stack order matching engine that simulates a stock exchange, built with J
 
 
 
-!\[Demo Screenshot](screenshot.png)
-
-\*Add a screenshot of your UI here\*
-
-
 
 \## 🎯 Project Overview
 
@@ -560,11 +555,9 @@ MIT License - feel free to use this project for learning!
 
 \*\*Karan Bhargava\*\*
 
-\- GitHub: \[@yourusername](https://github.com/yourusername)
+\- GitHub: \[@yourusername](https://github.com/karanb-07)
 
-\- LinkedIn: \[Your LinkedIn](https://linkedin.com/in/yourprofile)
-
-\- Portfolio: \[yourwebsite.com](https://yourwebsite.com)
+\- LinkedIn: \[Your LinkedIn](https://linkedin.com/in/kbharga)
 
 
 
