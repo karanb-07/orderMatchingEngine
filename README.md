@@ -555,9 +555,9 @@ MIT License - feel free to use this project for learning!
 
 \*\*Karan Bhargava\*\*
 
-\- GitHub: \[@yourusername](https://github.com/karanb-07)
+\- GitHub: \karanb-07(https://github.com/karanb-07)
 
-\- LinkedIn: \[Your LinkedIn](https://linkedin.com/in/kbharga)
+\- LinkedIn: \(https://linkedin.com/in/kbharga)
 
 
 
