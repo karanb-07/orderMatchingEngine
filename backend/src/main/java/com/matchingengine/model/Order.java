@@ -1,4 +1,5 @@
 package com.matchingengine.model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Order {
     private String orderId;
@@ -6,6 +7,8 @@ public class Order {
     private double price;
     private int quantity;
     private long timestamp;
+    @JsonIgnore Order next;
+    @JsonIgnore Order prev;
 
     // Constructor with all fields
     public Order(String orderId, String side, double price, int quantity, long timestamp) {
@@ -61,6 +64,8 @@ public class Order {
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
+
+    public Order getNext(){return this.next;}
 
     // toString method for debugging
     @Override
