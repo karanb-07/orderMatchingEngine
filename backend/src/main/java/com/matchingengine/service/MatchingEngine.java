@@ -3,6 +3,7 @@ package com.matchingengine.service;
 import com.matchingengine.model.Order;
 import com.matchingengine.model.Trade;
 import org.springframework.stereotype.Service;
+import com.matchingengine.model.PriceLevel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,8 +11,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class MatchingEngine {
-    private final TreeMap<Double, LinkedList<Order>> bids = new TreeMap<>(Collections.reverseOrder());
-    private final TreeMap<Double, LinkedList<Order>> asks = new TreeMap<>();
+    private final TreeMap<Double, PriceLevel> bids = new TreeMap<>(Collections.reverseOrder());
+    private final TreeMap<Double, PriceLevel> asks = new TreeMap<>();
     private final Map<String, Order> orderMap = new ConcurrentHashMap<>();
     private final List<Trade> trades = (Collections.synchronizedList(new ArrayList<>()));
     private final ReentrantLock lock = new ReentrantLock();
@@ -40,8 +41,8 @@ public class MatchingEngine {
         try {
             Order order = orderMap.get(orderId);
             if (order != null) {
-                TreeMap<Double, LinkedList<Order>> orders = order.getSide().equals("BUY") ? bids : asks;
-                List<Order> queue = orders.get(order.getPrice());
+                TreeMap<Double, PriceLevel> orders = order.getSide().equals("BUY") ? bids : asks;
+                PriceLevel queue = orders.get(order.getPrice());
                 if (queue != null) {
                     queue.remove(order);
                     if (queue.isEmpty()) {
@@ -63,13 +64,13 @@ public class MatchingEngine {
         while (!asks.isEmpty() && buyOrder.getQuantity() > 0) {
             Double bestAskPrice = asks.firstKey();
             if (buyOrder.getPrice() >= bestAskPrice) {
-                LinkedList<Order> askQueue = asks.get(bestAskPrice);
-                Order sellOrder = askQueue.getFirst();
+                PriceLevel askQueue = asks.get(bestAskPrice);
+                Order sellOrder = askQueue.peekFirst();
                 Trade trade = executeTrade(buyOrder, sellOrder, bestAskPrice);
                 executedTrades.add(trade);
                 trades.add(trade);
                 if (sellOrder.getQuantity() == 0) {
-                    askQueue.removeFirst();
+                    askQueue.remove(sellOrder);
                     orderMap.remove(sellOrder.getOrderId());
                     if (askQueue.isEmpty()) {
                         asks.remove(bestAskPrice);
@@ -88,13 +89,13 @@ public class MatchingEngine {
         while (!bids.isEmpty() && sellOrder.getQuantity() > 0) {
             Double bestBidPrice = bids.firstKey();
             if (sellOrder.getPrice() <= bestBidPrice) {
-                LinkedList<Order> bidQueue = bids.get(bestBidPrice);
-                Order buyOrder = bidQueue.getFirst();
+                PriceLevel bidQueue = bids.get(bestBidPrice);
+                Order buyOrder = bidQueue.peekFirst();
                 Trade trade = executeTrade(buyOrder, sellOrder, bestBidPrice);
                 executedTrades.add(trade);
                 trades.add(trade);
                 if (buyOrder.getQuantity() == 0) {
-                    bidQueue.removeFirst();
+                    bidQueue.remove(buyOrder);
                     orderMap.remove(buyOrder.getOrderId());
                     if (bidQueue.isEmpty()) {
                         bids.remove(bestBidPrice);
@@ -116,10 +117,10 @@ public class MatchingEngine {
     }
 
     private void addToBook(Order order) {
-        TreeMap<Double, LinkedList<Order>> book =
+        TreeMap<Double, PriceLevel> book =
                 "BUY".equals(order.getSide()) ? bids : asks;
 
-        book.putIfAbsent(order.getPrice(), new LinkedList<>());
+        book.putIfAbsent(order.getPrice(), new PriceLevel());
         book.get(order.getPrice()).addLast(order);
         orderMap.put(order.getOrderId(), order);
     }
@@ -152,16 +153,20 @@ public class MatchingEngine {
         }
     }
 
-    private List<Map<String, Object>> formatBookSide(TreeMap<Double, LinkedList<Order>> bookSide) {
+    private List<Map<String, Object>> formatBookSide(TreeMap<Double, PriceLevel> bookSide) {
         List<Map<String, Object>> formatted = new ArrayList<>();
 
-        for (Map.Entry<Double, LinkedList<Order>> entry : bookSide.entrySet()) {
+        for (Map.Entry<Double, PriceLevel> entry : bookSide.entrySet()) {
             Map<String, Object> level = new HashMap<>();
             level.put("price", entry.getKey());
-            level.put("quantity", entry.getValue().stream()
-                    .mapToInt(Order::getQuantity)
-                    .sum());
-            level.put("orders", entry.getValue().size());
+            PriceLevel p = entry.getValue();
+            int count = 0, orderTotal = 0;
+            for (Order o = p.peekFirst(); o != null; o = o.getNext()) {
+                count++;
+                orderTotal+=o.getQuantity();
+            }
+            level.put("quantity", orderTotal);
+            level.put("orders", count);
             formatted.add(level);
         }
 
