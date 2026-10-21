@@ -133,9 +133,9 @@ public List<Trade> processOrder(Order order) {
 ```
 
 This prevents:
-- ❌ Double-matching (same order matched twice)
-- ❌ Negative quantities
-- ❌ Corrupted order book state
+-  Double-matching (same order matched twice)
+-  Negative quantities
+-  Corrupted order book state
 
 ---
 
