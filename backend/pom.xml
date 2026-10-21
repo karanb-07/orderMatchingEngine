@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<jmh.version>1.37</jmh.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -44,6 +45,26 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Benchmarks (src/test/java/com/matchingengine/bench) -->
+		<dependency>
+			<groupId>org.openjdk.jmh</groupId>
+			<artifactId>jmh-core</artifactId>
+			<version>${jmh.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openjdk.jmh</groupId>
+			<artifactId>jmh-generator-annprocess</artifactId>
+			<version>${jmh.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.hdrhistogram</groupId>
+			<artifactId>HdrHistogram</artifactId>
+			<version>2.2.2</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -51,6 +72,71 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- JDK 23+ no longer auto-discovers annotation processors; JMH needs its generator to run. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-testCompile</id>
+						<configuration>
+							<annotationProcessorPaths>
+								<path>
+									<groupId>org.openjdk.jmh</groupId>
+									<artifactId>jmh-generator-annprocess</artifactId>
+									<version>${jmh.version}</version>
+								</path>
+							</annotationProcessorPaths>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!--
+			  Benchmarks:
+			    ./mvnw test-compile exec:exec@jmh       throughput (JMH), results in target/jmh-result.json
+			    ./mvnw test-compile exec:exec@latency   per-operation percentiles (HdrHistogram), prints a Markdown table
+			-->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>jmh</id>
+						<configuration>
+							<executable>java</executable>
+							<classpathScope>test</classpathScope>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>org.openjdk.jmh.Main</argument>
+								<argument>com.matchingengine.bench.MatchingEngineBenchmark</argument>
+								<argument>-rf</argument>
+								<argument>json</argument>
+								<argument>-rff</argument>
+								<argument>target/jmh-result.json</argument>
+							</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>latency</id>
+						<configuration>
+							<executable>java</executable>
+							<classpathScope>test</classpathScope>
+							<arguments>
+								<argument>-Xms2g</argument>
+								<argument>-Xmx2g</argument>
+								<argument>-XX:+AlwaysPreTouch</argument>
+								<argument>-Xlog:gc:file=target/latency-gc.log</argument>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>com.matchingengine.bench.LatencyReport</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
