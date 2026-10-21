@@ -141,7 +141,7 @@ public final class LatencyReport {
         System.out.printf(Locale.US, "- OS: %s %s (%s), %d logical CPUs, max heap %,d MB%n",
                 System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch"),
                 rt.availableProcessors(), rt.maxMemory() / (1024 * 1024));
-        System.out.println("- CPU model: Intel Ultra 9 285H");
+        System.out.println("- CPU model: <Fill in>");
         System.out.printf(Locale.US, "- Workload: %,d measured orders per depth, seed %d, %d price levels per side, %d warmup replays%n",
                 ops, seed, levels, warmup);
         System.out.println("- Single-threaded, matching core called directly (no Spring/HTTP); times include ~20 ns nanoTime() overhead");
